@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:whisperly/services/auth_service.dart';
 import 'package:whisperly/utils/nickname_generator.dart';
 import 'package:whisperly/widgets/button_change_id_mode.dart';
 import 'package:whisperly/widgets/button_switch_brightness.dart';
+import 'package:whisperly/widgets/form_error_message.dart';
 import 'package:whisperly/widgets/icon_opening_hoverable.dart';
 import 'package:whisperly/widgets/form_title.dart';
 import 'package:whisperly/widgets/login_form.dart';
@@ -19,6 +21,7 @@ class IdentificationScreen extends StatefulWidget {
 class _IdentificationScreenState extends State<IdentificationScreen> {
   final loginFormKey = GlobalKey<FormState>();
   final registerFormKey = GlobalKey<FormState>();
+
   final TextEditingController _usernameController =
       TextEditingController(text: NicknameGenerator.generateNickname());
   final TextEditingController _emailController = TextEditingController();
@@ -28,30 +31,50 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
   bool isLogin = true;
 
-  toggleLoginMode() {
-    setState(() {
-      isLogin = !isLogin;
-    });
-  }
+  String? errorMessage;
 
   login(BuildContext context, AuthService authService) async {
+    setErrorMessage(null);
     if (loginFormKey.currentState!.validate()) {
-      await authService.signInWithEmailAndPassword(
-        _emailController.text,
-        _passwordController.text,
-      );
-      Navigator.of(context).pop();
+      try {
+        await authService.signInWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+        );
+        Navigator.of(context).pop();
+      } on FirebaseAuthException catch (err) {
+        setErrorMessage(err.message);
+      }
     }
   }
 
   register(BuildContext context, AuthService authService) async {
+    setErrorMessage(null);
     if (registerFormKey.currentState!.validate()) {
-      await authService.createUserWithEmailAndPassword(
-        _emailController.text,
-        _passwordController.text,
-      );
-      Navigator.of(context).pop();
+      try {
+        await authService.createUserWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+          _usernameController.text,
+        );
+        Navigator.of(context).pop();
+      } on FirebaseAuthException catch (err) {
+        setErrorMessage(err.message);
+      }
     }
+  }
+
+  toggleLoginMode() {
+    setState(() {
+      isLogin = !isLogin;
+      errorMessage = null;
+    });
+  }
+
+  setErrorMessage(String? message) {
+    setState(() {
+      errorMessage = message;
+    });
   }
 
   @override
@@ -72,14 +95,13 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Hero(
-                tag: "IconOpeningHoverable",
-                child: IconOpeningHoverable(
-                  size: frameHeight,
-                  onPressed: () => isLogin
-                      ? login(context, authService)
-                      : register(context, authService),
-                ),
+              IconOpeningHoverable(
+                color: errorMessage != null
+                    ? Theme.of(context).colorScheme.error
+                    : Theme.of(context).colorScheme.primary,
+                onPressed: () => isLogin
+                    ? login(context, authService)
+                    : register(context, authService),
               ),
               Padding(
                 padding: const EdgeInsets.all(10),
@@ -106,6 +128,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                                     _passwordConfirmationController,
                               ),
                       ),
+                      FormErrorMessage(errorMessage: errorMessage),
                       ButtonChangeIdMode(
                         isLogin: isLogin,
                         onPressed: toggleLoginMode,

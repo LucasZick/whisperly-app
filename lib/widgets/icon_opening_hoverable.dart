@@ -1,16 +1,18 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:whisperly/utils/dynamic_size.dart';
 
 class IconOpeningHoverable extends StatefulWidget {
-  const IconOpeningHoverable(
-      {super.key,
-      required this.size,
-      required this.onPressed,
-      this.hoveredIcon = Icons.play_arrow_rounded});
-  final double size;
+  const IconOpeningHoverable({
+    super.key,
+    required this.onPressed,
+    required this.color,
+    this.hoveredIcon = Icons.play_arrow_rounded,
+  });
   final VoidCallback? onPressed;
   final IconData? hoveredIcon;
+  final Color color;
 
   @override
   State<IconOpeningHoverable> createState() => _IconOpeningHoverableState();
@@ -58,25 +60,30 @@ class _IconOpeningHoverableState extends State<IconOpeningHoverable> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => changeCurrIndex(2),
-      onExit: (_) => changeCurrIndex(0),
-      child: TextButton(
-        onPressed: widget.onPressed,
-        child: AnimatedSwitcher(
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          duration: const Duration(milliseconds: 500),
-          transitionBuilder: (child, anim) => RotationTransition(
-            turns: child.key == const ValueKey('icon1')
-                ? Tween<double>(begin: 1, end: 0.75).animate(anim)
-                : Tween<double>(begin: 0.75, end: 1).animate(anim),
-            child: ScaleTransition(scale: anim, child: child),
-          ),
-          child: Icon(
-            getIcon(),
-            key: ValueKey('icon$_currIndex'),
-            size: widget.size,
+    Size size = MediaQuery.of(context).size;
+    return Hero(
+      tag: "IconOpeningHoverable",
+      child: MouseRegion(
+        onEnter: (_) => changeCurrIndex(2),
+        onExit: (_) => changeCurrIndex(0),
+        child: TextButton(
+          onPressed: widget.onPressed,
+          child: AnimatedSwitcher(
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            duration: const Duration(milliseconds: 500),
+            transitionBuilder: (child, anim) => RotationTransition(
+              turns: child.key == const ValueKey('icon1')
+                  ? Tween<double>(begin: 1, end: 0.75).animate(anim)
+                  : Tween<double>(begin: 0.75, end: 1).animate(anim),
+              child: ScaleTransition(scale: anim, child: child),
+            ),
+            child: Icon(
+              getIcon(),
+              key: ValueKey('icon$_currIndex'),
+              size: DynamicSize.getDynamicSmallerSizeWithMultiplier(size, 0.8),
+              color: widget.color,
+            ),
           ),
         ),
       ),

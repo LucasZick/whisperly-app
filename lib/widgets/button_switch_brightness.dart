@@ -9,9 +9,9 @@ class ButtonSwitchBrightness extends StatelessWidget {
   Widget build(BuildContext context) {
     ConfigsService configsProvider =
         Provider.of<ConfigsService>(context, listen: true);
-    return TextButton(
+    return IconButton(
       onPressed: configsProvider.invertDarkMode,
-      child: Icon(
+      icon: Icon(
         configsProvider.isDark
             ? Icons.dark_mode_outlined
             : Icons.light_mode_outlined,

@@ -1,6 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:whisperly/models/user_model.dart';
+import 'package:whisperly/providers/user_data_provider.dart';
 import 'package:whisperly/services/auth_service.dart';
 import 'package:whisperly/utils/dynamic_size.dart';
 import 'package:whisperly/utils/validators.dart';
@@ -15,7 +19,29 @@ class UserInfoDisplay extends StatefulWidget {
 class _UserInfoDisplayState extends State<UserInfoDisplay> {
   final userInfoKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController contactCodeController = TextEditingController();
+
   bool isLoading = false;
+  IconData copyIcon = Icons.copy;
+  bool showConfirmation = false;
+
+  void copyToClipboard(String input) {
+    Clipboard.setData(ClipboardData(text: input));
+    setState(() {
+      copyIcon = Icons.done;
+      showConfirmation = true;
+    });
+
+    Timer(
+      const Duration(seconds: 3),
+      () {
+        setState(() {
+          copyIcon = Icons.copy;
+          showConfirmation = false;
+        });
+      },
+    );
+  }
 
   setLoading(bool newValue) {
     setState(() {
@@ -23,10 +49,12 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
     });
   }
 
-  updateDisplayName(AuthService authService) async {
+  updateDisplayName(
+      AuthService authService, UserDataProvider userDataProvider) async {
     setLoading(true);
     if (userInfoKey.currentState!.validate()) {
       await authService.changeDisplayName(nameController.text);
+      await userDataProvider.updateUserName(nameController.text);
     }
     setLoading(false);
   }
@@ -34,10 +62,17 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    User? user = FirebaseAuth.instance.currentUser;
+    UserDataProvider userDataProvider =
+        Provider.of<UserDataProvider>(context, listen: true);
+
+    UserModel? user = userDataProvider.currentUser;
     Size screenSize = MediaQuery.of(context).size;
+
     if (nameController.text.isEmpty && user != null) {
       nameController.text = user.displayName ?? "";
+    }
+    if (contactCodeController.text.isEmpty && user != null) {
+      contactCodeController.text = user.contactCode ?? "";
     }
 
     return SizedBox(
@@ -57,8 +92,12 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
                   label: const Text('Username'),
                   prefixIcon: const Icon(Icons.person),
                   suffixIcon: TextButton(
-                    onPressed:
-                        isLoading ? null : () => updateDisplayName(authService),
+                    onPressed: isLoading
+                        ? null
+                        : () => updateDisplayName(
+                              authService,
+                              userDataProvider,
+                            ),
                     child: isLoading
                         ? const SizedBox(
                             width: 20,
@@ -73,12 +112,16 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
                     screenSize, 0.025),
               ),
               TextFormField(
-                initialValue: user?.email ?? "",
+                controller: contactCodeController,
                 textAlign: TextAlign.center,
                 readOnly: true,
-                decoration: const InputDecoration(
-                  label: Text('Email'),
-                  prefixIcon: Icon(Icons.email),
+                decoration: InputDecoration(
+                  label: const Text('Contact code'),
+                  prefixIcon: const Icon(Icons.code),
+                  suffixIcon: TextButton(
+                    onPressed: () => copyToClipboard(user?.contactCode ?? ""),
+                    child: Icon(copyIcon),
+                  ),
                 ),
               )
             ],

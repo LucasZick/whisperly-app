@@ -40,4 +40,24 @@ class Validators {
 
     return null;
   }
+
+  static String? validateContactCode(String? input) {
+    bool isEmpty = input == null || input.isEmpty;
+    RegExp startWithHash = RegExp(r'^#');
+    RegExp alphanumericEightChars = RegExp(r'^[a-zA-Z0-9]{8}$');
+
+    if (isEmpty) {
+      return "O código de contato não pode estar vazio";
+    }
+
+    if (!startWithHash.hasMatch(input)) {
+      return "O código de contato deve começar com '#'";
+    }
+
+    if (!alphanumericEightChars.hasMatch(input.substring(1))) {
+      return "O código de contato deve conter exatamente 8 caracteres alfanuméricos após o '#'";
+    }
+
+    return null;
+  }
 }

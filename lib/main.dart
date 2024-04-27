@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:whisperly/app_theme.dart';
 import 'package:whisperly/firebase_options.dart';
+import 'package:whisperly/providers/chats_provider.dart';
+import 'package:whisperly/providers/user_data_provider.dart';
 import 'package:whisperly/services/auth_service.dart';
-import 'package:whisperly/services/configs_service.dart';
+import 'package:whisperly/providers/configs_provider.dart';
 import 'package:whisperly/routes.dart';
 import 'package:whisperly/utils/app_routes.dart';
 
@@ -23,9 +25,11 @@ class WhisperlyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<AuthService>(create: (_) => AuthService()),
-        ListenableProvider<ConfigsService>(create: (_) => ConfigsService())
+        ListenableProvider<ConfigsProvider>(create: (_) => ConfigsProvider()),
+        ListenableProvider<UserDataProvider>(create: (_) => UserDataProvider()),
+        ListenableProvider<ChatsProvider>(create: (_) => ChatsProvider()),
       ],
-      child: Consumer<ConfigsService>(
+      child: Consumer<ConfigsProvider>(
         builder: (ctx, notifier, child) {
           return MaterialApp(
             title: 'Whisperly',

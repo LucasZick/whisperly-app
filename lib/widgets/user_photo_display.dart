@@ -1,5 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:whisperly/providers/user_data_provider.dart';
 import 'package:whisperly/utils/dynamic_size.dart';
 
 class UserPhotoDisplay extends StatelessWidget {
@@ -7,7 +8,8 @@ class UserPhotoDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
+    UserDataProvider userDataProvider =
+        Provider.of<UserDataProvider>(context, listen: true);
     Size screenSize = MediaQuery.of(context).size;
     return Stack(
       children: [
@@ -16,10 +18,12 @@ class UserPhotoDisplay extends StatelessWidget {
           child: CircleAvatar(
             radius: DynamicSize.getDynamicSmallerSizeWithMultiplier(
                 screenSize, 0.1),
-            backgroundImage: user != null && user.photoURL != null
-                ? NetworkImage(user.photoURL!)
+            backgroundImage: userDataProvider.currentUser?.photoUrl != null &&
+                    userDataProvider.currentUser?.photoUrl != null
+                ? NetworkImage(userDataProvider.currentUser!.photoUrl!)
                 : null,
-            child: user == null || user.photoURL == null
+            child: userDataProvider.currentUser == null ||
+                    userDataProvider.currentUser?.photoUrl == null
                 ? const Icon(Icons.person)
                 : null,
           ),

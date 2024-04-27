@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:whisperly/providers/user_data_provider.dart';
 import 'package:whisperly/services/auth_service.dart';
 import 'package:whisperly/utils/nickname_generator.dart';
 import 'package:whisperly/widgets/button_change_id_mode.dart';
@@ -33,11 +34,15 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
   String? errorMessage;
 
-  login(BuildContext context, AuthService authService) async {
+  login(
+    BuildContext context,
+    AuthService authService,
+    UserDataProvider userDataProvider,
+  ) async {
     setErrorMessage(null);
     if (loginFormKey.currentState!.validate()) {
       try {
-        await authService.signInWithEmailAndPassword(
+        User? currentUser = await authService.signInWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
         );
@@ -48,11 +53,15 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
     }
   }
 
-  register(BuildContext context, AuthService authService) async {
+  register(
+    BuildContext context,
+    AuthService authService,
+    UserDataProvider userDataProvider,
+  ) async {
     setErrorMessage(null);
     if (registerFormKey.currentState!.validate()) {
       try {
-        await authService.createUserWithEmailAndPassword(
+        User? currentUser = await authService.createUserWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
           _usernameController.text,
@@ -79,9 +88,12 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    AuthService authService = Provider.of<AuthService>(context);
     double frameWidth = MediaQuery.of(context).size.width * 0.8;
     double frameHeight = MediaQuery.of(context).size.height * 0.8;
+
+    AuthService authService = Provider.of<AuthService>(context);
+    UserDataProvider userDataProvider =
+        Provider.of<UserDataProvider>(context, listen: true);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -100,8 +112,8 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                     ? Theme.of(context).colorScheme.error
                     : Theme.of(context).colorScheme.primary,
                 onPressed: () => isLogin
-                    ? login(context, authService)
-                    : register(context, authService),
+                    ? login(context, authService, userDataProvider)
+                    : register(context, authService, userDataProvider),
               ),
               Padding(
                 padding: const EdgeInsets.all(10),

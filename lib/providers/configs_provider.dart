@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-class ConfigsService with ChangeNotifier {
+class ConfigsProvider with ChangeNotifier {
   bool isDark;
   String language;
 
-  ConfigsService({this.isDark = false, this.language = "en"});
+  ConfigsProvider({this.isDark = false, this.language = "en"});
 
   set changeDarkMode(value) {
     isDark = value;

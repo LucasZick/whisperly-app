@@ -6,7 +6,7 @@ class SearchContactsSnack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Padding(
-      padding: EdgeInsets.all(10),
+      padding: EdgeInsets.symmetric(horizontal: 20),
       child: TextField(
         decoration: InputDecoration(
           hintText: "Search a contact or group...",

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:whisperly/services/configs_service.dart';
+import 'package:whisperly/providers/configs_provider.dart';
 
 class ButtonSwitchBrightness extends StatelessWidget {
   const ButtonSwitchBrightness({super.key});
 
   @override
   Widget build(BuildContext context) {
-    ConfigsService configsProvider =
-        Provider.of<ConfigsService>(context, listen: true);
+    ConfigsProvider configsProvider =
+        Provider.of<ConfigsProvider>(context, listen: true);
     return IconButton(
       onPressed: configsProvider.invertDarkMode,
       icon: Icon(

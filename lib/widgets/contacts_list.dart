@@ -1,71 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:whisperly/models/chat_model.dart';
+import 'package:whisperly/providers/chats_provider.dart';
+import 'package:whisperly/widgets/contact_list_tile.dart';
+import 'package:whisperly/widgets/no_items_warning.dart';
 
 class ContactsList extends StatelessWidget {
   const ContactsList({super.key});
 
-  final List<String> contacts = const [
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-    'Pedro',
-    'João',
-    'Guilherme',
-    'Anderson',
-  ];
-
   @override
   Widget build(BuildContext context) {
+    ChatsProvider chatsProvider =
+        Provider.of<ChatsProvider>(context, listen: true);
+    List<ChatModel>? chats = chatsProvider.currentChats;
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: ListView.builder(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          itemCount: contacts.length,
-          itemBuilder: (context, index) {
-            return _buildContactTile(contacts[index]);
-          },
+        padding: const EdgeInsets.only(top: 10),
+        child: Material(
+          type: MaterialType.transparency,
+          child: chats != null && chats.isNotEmpty
+              ? ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: chats.length,
+                  itemBuilder: (context, index) {
+                    return ContactListTile(chat: chats[index]);
+                  },
+                )
+              : const NoItemsWarning(itemType: "contacts"),
         ),
       ),
-    );
-  }
-
-  Widget _buildContactTile(String contactName) {
-    return ListTile(
-      leading: CircleAvatar(child: Text(contactName[0])),
-      title: Text(contactName),
-      subtitle: const Text('Última mensagem enviada'),
-      trailing: const Icon(Icons.arrow_right),
-      onTap: () {},
     );
   }
 }

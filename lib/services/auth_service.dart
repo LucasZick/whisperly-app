@@ -1,22 +1,31 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:whisperly/models/user_model.dart';
+import 'package:whisperly/utils/unique_code_generator.dart';
 
 class AuthService {
   final auth.FirebaseAuth _firebaseAuth = auth.FirebaseAuth.instance;
+  final FirebaseFirestore _firebaseDatabase = FirebaseFirestore.instance;
 
   UserModel? _userFromFirebase(auth.User? user) {
     if (user == null) {
       return null;
     }
-    return UserModel(user.uid, user.email, user.displayName);
+    return UserModel(
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      photoUrl:
+          "https://cdn.pixabay.com/photo/2018/11/13/21/43/avatar-3814049_640.png",
+    );
   }
 
   Stream<UserModel?>? get user {
     return _firebaseAuth.authStateChanges().map(_userFromFirebase);
   }
 
-  Future<UserModel?> signInWithEmailAndPassword(
+  Future<auth.User?> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
@@ -24,10 +33,10 @@ class AuthService {
       email: email,
       password: password,
     );
-    return _userFromFirebase(credential.user);
+    return credential.user;
   }
 
-  Future<UserModel?> createUserWithEmailAndPassword(
+  Future<auth.User?> createUserWithEmailAndPassword(
     String email,
     String password,
     String username,
@@ -37,24 +46,49 @@ class AuthService {
       password: password,
     );
     registerUserDetails(credential, username);
-    return _userFromFirebase(credential.user);
+    addUserToDatabase(credential, username);
+    return credential.user;
   }
 
-  registerUserDetails(credential, username) {
+  registerUserDetails(auth.UserCredential credential, String username) {
     credential.user?.updateDisplayName(username);
     credential.user?.updatePhotoURL(
         "https://cdn.pixabay.com/photo/2018/11/13/21/43/avatar-3814049_640.png");
   }
 
+  addUserToDatabase(auth.UserCredential credential, String username) {
+    Map<String, dynamic> userData = {
+      "uid": credential.user?.uid,
+      "name": username,
+      "email": credential.user?.email,
+      "photo_url":
+          "https://cdn.pixabay.com/photo/2018/11/13/21/43/avatar-3814049_640.png",
+      "contact_code":
+          UniqueCodeGenerator.generate(credential.user?.uid ?? "", username),
+      "contacts": [],
+      "chats": [],
+    };
+    var collection = _firebaseDatabase.collection('users');
+    var uid = credential.user?.uid;
+    collection
+        .doc(uid) // Definindo o documento com o UID
+        .set(userData) // Define os dados no documento
+        .then((_) => print('Document added for $username'))
+        .catchError((error) => print('Add failed: $error'));
+  }
+
   changeDisplayName(String newName) async {
-    User? user = FirebaseAuth.instance.currentUser;
+    auth.User? user = _firebaseAuth.currentUser;
     if (user != null) {
       await user.updateDisplayName(newName);
+      await _firebaseDatabase.collection("users").doc(user.uid).update(
+        {"name": newName},
+      );
     }
   }
 
   changePhotoUrl(String newPhotoUrl) {
-    User? user = FirebaseAuth.instance.currentUser;
+    auth.User? user = _firebaseAuth.currentUser;
     if (user != null) {
       user.updatePhotoURL(newPhotoUrl);
     }

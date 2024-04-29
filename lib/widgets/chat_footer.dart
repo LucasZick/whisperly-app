@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:whisperly/providers/chats_provider.dart';
 
 class ChatFooter extends StatelessWidget {
-  const ChatFooter({super.key});
+  const ChatFooter({super.key, required this.chatsProvider});
+  final ChatsProvider chatsProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +25,10 @@ class ChatFooter extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              chatsProvider.sendMessage(
+                  "pedro", chatsProvider.currentChatId ?? "");
+            },
             icon: const Icon(Icons.mic),
           ),
         ],

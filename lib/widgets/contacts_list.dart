@@ -12,7 +12,7 @@ class ContactsList extends StatelessWidget {
   Widget build(BuildContext context) {
     ChatsProvider chatsProvider =
         Provider.of<ChatsProvider>(context, listen: true);
-    List<ChatModel>? chats = chatsProvider.currentChats;
+    List<ChatModel>? chats = chatsProvider.chats;
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.only(top: 10),

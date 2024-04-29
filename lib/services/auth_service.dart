@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:whisperly/models/user_model.dart';
 import 'package:whisperly/utils/unique_code_generator.dart';
 
@@ -16,8 +15,7 @@ class AuthService {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
-      photoUrl:
-          "https://cdn.pixabay.com/photo/2018/11/13/21/43/avatar-3814049_640.png",
+      photoUrl: user.photoURL,
     );
   }
 

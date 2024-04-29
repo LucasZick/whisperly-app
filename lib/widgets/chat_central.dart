@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:whisperly/models/chat_model.dart';
+import 'package:whisperly/providers/chats_provider.dart';
 import 'package:whisperly/widgets/add_contact_field.dart';
 import 'package:whisperly/widgets/chat_field.dart';
 import 'package:whisperly/widgets/contacts_field.dart';
 import 'package:whisperly/widgets/profile_field.dart';
+import 'package:whisperly/widgets/unselected_chat_field.dart';
 
 enum FieldMode { contactsList, profile, addContact }
 
@@ -24,6 +28,8 @@ class ChatCentralState extends State<ChatCentral> {
 
   @override
   Widget build(BuildContext context) {
+    ChatsProvider chatsProvider = Provider.of<ChatsProvider>(context);
+
     Map<FieldMode, Widget> fields = {
       FieldMode.contactsList: ContactsField(
         openProfileField: () => setMode(FieldMode.profile),
@@ -54,7 +60,7 @@ class ChatCentralState extends State<ChatCentral> {
                 transitionBuilder: (Widget child, Animation<double> animation) {
                   return SlideTransition(
                     position: Tween(
-                            begin: const Offset(0.0, 1.0),
+                            begin: const Offset(-2.0, 0.0),
                             end: const Offset(0.0, 0.0))
                         .animate(animation),
                     child: child,
@@ -65,7 +71,9 @@ class ChatCentralState extends State<ChatCentral> {
             ],
           ),
         ),
-        const ChatField(),
+        chatsProvider.currentChatId != null
+            ? const ChatField()
+            : const UnselectedChatField(),
       ],
     );
   }

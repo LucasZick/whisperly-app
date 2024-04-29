@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:whisperly/models/chat_model.dart';
+import 'package:whisperly/providers/chats_provider.dart';
 
 class ContactListTile extends StatelessWidget {
   const ContactListTile({super.key, required this.chat});
@@ -7,12 +9,13 @@ class ContactListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ChatsProvider chatsProvider = Provider.of<ChatsProvider>(context);
     return ListTile(
       leading: CircleAvatar(
         backgroundImage: NetworkImage(chat.contactUser.photoUrl ?? ""),
       ),
       trailing: PopupMenuButton<String>(
-        icon: Icon(Icons.more_vert),
+        icon: const Icon(Icons.more_vert),
         onSelected: (String value) {
           // Implemente a lógica para cada opção selecionada aqui
           switch (value) {
@@ -70,7 +73,7 @@ class ContactListTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      onTap: () {},
+      onTap: () => chatsProvider.setCurrentChat(chat.chatId),
     );
   }
 }

@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:whisperly/models/user_model.dart';
+import 'package:whisperly/providers/user_data_provider.dart';
 import 'package:whisperly/services/auth_service.dart';
 import 'package:whisperly/widgets/button_switch_brightness.dart';
 
@@ -13,11 +15,12 @@ class ContactsFieldHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userDataService = Provider.of<AuthService>(context);
-    User? user = FirebaseAuth.instance.currentUser;
+    final authService = Provider.of<AuthService>(context);
+    UserDataProvider userDataProvider =
+        Provider.of<UserDataProvider>(context, listen: true);
+    UserModel? user = userDataProvider.currentUser;
     final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen =
-        screenWidth < 1000; // Define o limite para a tela pequena
+    final isSmallScreen = screenWidth < 1000;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -25,7 +28,7 @@ class ContactsFieldHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Visibility(
-            visible: !isSmallScreen, // Esconde o texto em telas pequenas
+            visible: !isSmallScreen,
             child: Text(
               title,
               style: GoogleFonts.lato().copyWith(
@@ -40,10 +43,10 @@ class ContactsFieldHeader extends StatelessWidget {
             child: Hero(
               tag: "userProfilePic",
               child: CircleAvatar(
-                backgroundImage: user != null && user.photoURL != null
-                    ? NetworkImage(user.photoURL!)
+                backgroundImage: user != null && user.photoUrl != null
+                    ? NetworkImage(user.photoUrl ?? "")
                     : null,
-                child: user == null || user.photoURL == null
+                child: user == null || user.photoUrl == null
                     ? const Icon(Icons.person)
                     : null,
               ),
@@ -51,7 +54,7 @@ class ContactsFieldHeader extends StatelessWidget {
           ),
           const ButtonSwitchBrightness(),
           IconButton(
-            onPressed: userDataService.signOut,
+            onPressed: authService.signOut,
             icon: const Icon(Icons.logout),
           ),
         ],

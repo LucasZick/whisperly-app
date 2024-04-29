@@ -42,7 +42,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
     setErrorMessage(null);
     if (loginFormKey.currentState!.validate()) {
       try {
-        User? currentUser = await authService.signInWithEmailAndPassword(
+        await authService.signInWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
         );
@@ -61,7 +61,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
     setErrorMessage(null);
     if (registerFormKey.currentState!.validate()) {
       try {
-        User? currentUser = await authService.createUserWithEmailAndPassword(
+        await authService.createUserWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
           _usernameController.text,

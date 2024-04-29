@@ -20,7 +20,7 @@ class ChatField extends StatelessWidget {
         child: Column(
           children: [
             ChatHeader(chatsProvider: chatsProvider),
-            Chat(),
+            const Chat(),
             ChatFooter(chatsProvider: chatsProvider),
           ],
         ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class UnselectedChatDisplay extends StatelessWidget {
-  const UnselectedChatDisplay({Key? key}) : super(key: key);
+  const UnselectedChatDisplay({super.key});
 
   @override
   Widget build(BuildContext context) {

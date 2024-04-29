@@ -8,7 +8,7 @@ import 'package:whisperly/widgets/message_box.dart';
 import 'package:whisperly/widgets/no_items_warning.dart';
 
 class Chat extends StatefulWidget {
-  const Chat({Key? key}) : super(key: key);
+  const Chat({super.key});
 
   @override
   _ChatState createState() => _ChatState();

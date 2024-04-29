@@ -5,7 +5,7 @@ import 'package:whisperly/providers/chats_provider.dart'; // Importe o ChatsProv
 class ChatHeader extends StatelessWidget {
   final ChatsProvider chatsProvider;
 
-  const ChatHeader({Key? key, required this.chatsProvider}) : super(key: key);
+  const ChatHeader({super.key, required this.chatsProvider});
 
   @override
   Widget build(BuildContext context) {

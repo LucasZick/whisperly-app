@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:whisperly/models/chat_model.dart';
 import 'package:whisperly/providers/chats_provider.dart';
 import 'package:whisperly/widgets/add_contact_field.dart';
 import 'package:whisperly/widgets/chat_field.dart';

@@ -5,8 +5,13 @@ import 'package:whisperly/services/auth_service.dart';
 import 'package:whisperly/widgets/button_switch_brightness.dart';
 
 class FieldHeader extends StatelessWidget {
-  const FieldHeader(
-      {super.key, required this.title, required this.onReturnPressed});
+  const FieldHeader({
+    super.key,
+    required this.title,
+    required this.onReturnPressed,
+    this.showActionButtons = true,
+  });
+  final bool showActionButtons;
   final VoidCallback onReturnPressed;
   final String title;
 
@@ -26,7 +31,7 @@ class FieldHeader extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Visibility(
-            visible: !isSmallScreen, // Esconde o texto em telas pequenas
+            visible: !isSmallScreen,
             child: Text(
               title,
               style: GoogleFonts.lato().copyWith(
@@ -36,11 +41,12 @@ class FieldHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const ButtonSwitchBrightness(),
-          IconButton(
-            onPressed: userDataService.signOut,
-            icon: const Icon(Icons.logout),
-          ),
+          if (showActionButtons) const ButtonSwitchBrightness(),
+          if (showActionButtons)
+            IconButton(
+              onPressed: userDataService.signOut,
+              icon: const Icon(Icons.logout),
+            ),
         ],
       ),
     );

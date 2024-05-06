@@ -7,6 +7,8 @@ class ChatModel {
   final List<String> membersUid;
   final List<MessageModel> messages;
   final UserModel contactUser;
+  final DateTime? lastMessageTimestamp;
+  final Map? readMessages;
 
   ChatModel({
     required this.chatId,
@@ -14,5 +16,7 @@ class ChatModel {
     required this.membersUid,
     required this.contactUser,
     required this.messages,
+    this.lastMessageTimestamp,
+    this.readMessages,
   });
 }

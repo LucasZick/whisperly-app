@@ -60,4 +60,24 @@ class Validators {
 
     return null;
   }
+
+  static String? validatePhotoUrl(String? input) {
+    bool isEmpty = input == null || input.isEmpty;
+
+    if (isEmpty) {
+      return "O URL da foto não pode estar vazio";
+    }
+
+    return null;
+  }
+
+  static String? validateMessage(String? input) {
+    bool isEmpty = input == null || input.isEmpty;
+
+    if (isEmpty) {
+      return "A mensagem não pode estar vazia";
+    }
+
+    return null;
+  }
 }

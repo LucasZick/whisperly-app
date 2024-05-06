@@ -19,35 +19,46 @@ class UserModel {
       this.chats});
 }
 
-Future<List<UserModel>> getUsersFromIds(List memberIds) async {
+Future<UserModel> getUserFromId(String userId) async {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    DocumentSnapshot<Map<String, dynamic>> userSnapshot =
+        await firestore.collection("users").doc(userId).get();
+
+    if (userSnapshot.exists) {
+      Map<String, dynamic> userData = userSnapshot.data()!;
+      String uid = userId;
+      String displayName = userData['name'] ?? '';
+      String email = userData['email'] ?? '';
+      String photoUrl = userData['photo_url'] ?? '';
+      String contactCode = userData['contact_code'] ?? '';
+
+      UserModel user = UserModel(
+        uid: uid,
+        displayName: displayName,
+        email: email,
+        photoUrl: photoUrl,
+        contactCode: contactCode,
+      );
+
+      return user;
+    } else {
+      return UserModel();
+    }
+  } catch (e) {
+    print('Erro ao buscar usuário com ID $userId: $e');
+    return UserModel();
+  }
+}
+
+Future<List<UserModel>> getUsersFromIds(List memberIds) async {
   List<UserModel> users = [];
 
   for (String memberId in memberIds) {
-    try {
-      DocumentSnapshot<Map<String, dynamic>> userSnapshot =
-          await firestore.collection("users").doc(memberId).get();
-
-      if (userSnapshot.exists) {
-        Map<String, dynamic> userData = userSnapshot.data()!;
-        String uid = memberId;
-        String displayName = userData['name'] ?? '';
-        String email = userData['email'] ?? '';
-        String photoUrl = userData['photo_url'] ?? '';
-        String contactCode = userData['contact_code'] ?? '';
-
-        UserModel user = UserModel(
-          uid: uid,
-          displayName: displayName,
-          email: email,
-          photoUrl: photoUrl,
-          contactCode: contactCode,
-        );
-
-        users.add(user);
-      }
-    } catch (e) {
-      print('Erro ao buscar usuário com ID $memberId: $e');
+    UserModel user = await getUserFromId(memberId);
+    if (user.uid != null) {
+      users.add(user);
     }
   }
   return users;

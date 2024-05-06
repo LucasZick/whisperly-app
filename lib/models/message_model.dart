@@ -1,8 +1,11 @@
+import 'package:whisperly/models/user_model.dart';
+
 enum MessageType { text, image }
 
 class MessageModel {
   final String messageId;
   final String senderId;
+  final UserModel? sender;
   final String? messageText;
   final String? imageUrl;
   final DateTime timestamp;
@@ -12,6 +15,7 @@ class MessageModel {
   MessageModel({
     required this.messageId,
     required this.senderId,
+    this.sender,
     this.messageText,
     this.imageUrl,
     required this.timestamp,

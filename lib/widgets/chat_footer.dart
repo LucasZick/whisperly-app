@@ -1,35 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:whisperly/providers/chats_provider.dart';
+import 'package:whisperly/utils/validators.dart';
 
 class ChatFooter extends StatelessWidget {
-  const ChatFooter({super.key, required this.chatsProvider});
-  final ChatsProvider chatsProvider;
+  ChatFooter({super.key});
+  final TextEditingController messageController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  void sendMessage(ChatsProvider chatsProvider) {
+    if (formKey.currentState!.validate()) {
+      chatsProvider.sendMessage(
+          messageController.text, chatsProvider.currentChatId ?? "");
+      messageController.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    ChatsProvider chatsProvider = Provider.of<ChatsProvider>(context);
     return Container(
       margin: const EdgeInsets.all(20),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                maxLines: null, // Permite múltiplas linhas de texto
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  border: OutlineInputBorder(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Form(
+                key: formKey,
+                child: TextFormField(
+                  controller: messageController,
+                  validator: (input) => Validators.validateMessage(input),
+                  maxLines: 1,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(
+                    hintText: 'Type a message...',
+                    label: Text('Message'),
+                    border: OutlineInputBorder(),
+                  ),
+                  onFieldSubmitted: (input) {
+                    sendMessage(chatsProvider);
+                  },
                 ),
               ),
             ),
           ),
           IconButton(
-            onPressed: () {
-              chatsProvider.sendMessage(
-                  "pedro", chatsProvider.currentChatId ?? "");
-            },
-            icon: const Icon(Icons.mic),
+            onPressed: () => sendMessage(chatsProvider),
+            icon: const Icon(Icons.send_rounded),
           ),
         ],
       ),

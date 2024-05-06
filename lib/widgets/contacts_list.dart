@@ -18,16 +18,18 @@ class ContactsList extends StatelessWidget {
         padding: const EdgeInsets.only(top: 10),
         child: Material(
           type: MaterialType.transparency,
-          child: chats != null && chats.isNotEmpty
-              ? ListView.builder(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  itemCount: chats.length,
-                  itemBuilder: (context, index) {
-                    return ContactListTile(chat: chats[index]);
-                  },
-                )
-              : const NoItemsWarning(itemType: "contacts"),
+          child: chats != null
+              ? chats.isNotEmpty
+                  ? ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: chats.length,
+                      itemBuilder: (context, index) {
+                        return ContactListTile(chat: chats[index]);
+                      },
+                    )
+                  : const NoItemsWarning(itemType: "contacts")
+              : const Center(child: CircularProgressIndicator()),
         ),
       ),
     );

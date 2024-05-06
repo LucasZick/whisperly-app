@@ -70,6 +70,16 @@ class UserDataProvider extends ChangeNotifier {
     }
   }
 
+  updatePhotoUrl(String photoUrl) async {
+    User? authenticatedUser = _firebaseAuth.currentUser;
+    if (authenticatedUser != null) {
+      await _firebaseDatabase
+          .collection("users")
+          .doc(authenticatedUser.uid)
+          .update({'photo_url': photoUrl});
+    }
+  }
+
   Future<String?> addContact(String contactCode) async {
     User? authenticatedUser = _firebaseAuth.currentUser;
     if (authenticatedUser != null) {
@@ -114,6 +124,7 @@ class UserDataProvider extends ChangeNotifier {
             'chat_id': chatId,
             'members': [currentUserUid, contactUid],
             'messages': [],
+            'lastMessageTimestamp': null,
           };
 
           await _firebaseDatabase.collection("chats").doc(chatId).set(chatData);

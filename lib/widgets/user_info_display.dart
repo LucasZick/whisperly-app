@@ -10,7 +10,8 @@ import 'package:whisperly/utils/dynamic_size.dart';
 import 'package:whisperly/utils/validators.dart';
 
 class UserInfoDisplay extends StatefulWidget {
-  const UserInfoDisplay({super.key});
+  const UserInfoDisplay({super.key, required this.user});
+  final UserModel? user;
 
   @override
   State<UserInfoDisplay> createState() => _UserInfoDisplayState();
@@ -19,9 +20,11 @@ class UserInfoDisplay extends StatefulWidget {
 class _UserInfoDisplayState extends State<UserInfoDisplay> {
   final userInfoKey = GlobalKey<FormState>();
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController photoUrlController = TextEditingController();
   final TextEditingController contactCodeController = TextEditingController();
 
-  bool isLoading = false;
+  bool isUsernameLoading = false;
+  bool isPhotoUrlLoading = false;
   IconData copyIcon = Icons.copy;
   bool showConfirmation = false;
 
@@ -43,36 +46,56 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
     );
   }
 
-  setLoading(bool newValue) {
+  setLoadingUsername(bool newValue) {
     setState(() {
-      isLoading = newValue;
+      isUsernameLoading = newValue;
+    });
+  }
+
+  setLoadingPhotoUrl(bool newValue) {
+    setState(() {
+      isPhotoUrlLoading = newValue;
     });
   }
 
   updateDisplayName(
       AuthService authService, UserDataProvider userDataProvider) async {
-    setLoading(true);
+    setLoadingUsername(true);
     if (userInfoKey.currentState!.validate()) {
       await authService.changeDisplayName(nameController.text);
       await userDataProvider.updateUserName(nameController.text);
     }
-    setLoading(false);
+    setLoadingUsername(false);
+  }
+
+  updatePhotoUrl(
+      AuthService authService, UserDataProvider userDataProvider) async {
+    setLoadingPhotoUrl(true);
+    if (userInfoKey.currentState!.validate()) {
+      await authService.changePhotoUrl(photoUrlController.text);
+      await userDataProvider.updatePhotoUrl(photoUrlController.text);
+    }
+    setLoadingPhotoUrl(false);
   }
 
   @override
   Widget build(BuildContext context) {
+    Size screenSize = MediaQuery.of(context).size;
+
     final authService = Provider.of<AuthService>(context);
     UserDataProvider userDataProvider =
         Provider.of<UserDataProvider>(context, listen: true);
+    UserModel? authUser = userDataProvider.currentUser;
+    bool isCurrentUser = authUser?.uid == widget.user?.displayName;
 
-    UserModel? user = userDataProvider.currentUser;
-    Size screenSize = MediaQuery.of(context).size;
-
-    if (nameController.text.isEmpty && user != null) {
-      nameController.text = user.displayName ?? "";
+    if (nameController.text.isEmpty && widget.user != null) {
+      nameController.text = widget.user?.displayName ?? "";
     }
-    if (contactCodeController.text.isEmpty && user != null) {
-      contactCodeController.text = user.contactCode ?? "";
+    if (photoUrlController.text.isEmpty && widget.user != null) {
+      photoUrlController.text = widget.user?.photoUrl ?? "";
+    }
+    if (contactCodeController.text.isEmpty && widget.user != null) {
+      contactCodeController.text = widget.user?.contactCode ?? "";
     }
 
     return SizedBox(
@@ -88,23 +111,54 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
                 controller: nameController,
                 textAlign: TextAlign.center,
                 validator: (input) => Validators.validateUsername(input),
+                readOnly: !isCurrentUser,
                 decoration: InputDecoration(
                   label: const Text('Username'),
                   prefixIcon: const Icon(Icons.person),
-                  suffixIcon: TextButton(
-                    onPressed: isLoading
-                        ? null
-                        : () => updateDisplayName(
-                              authService,
-                              userDataProvider,
-                            ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2.5))
-                        : const Icon(Icons.done),
-                  ),
+                  suffixIcon: widget.user?.uid == authUser?.uid
+                      ? TextButton(
+                          onPressed: isUsernameLoading
+                              ? null
+                              : () => updateDisplayName(
+                                  authService, userDataProvider),
+                          child: isUsernameLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2.5))
+                              : const Icon(Icons.done),
+                        )
+                      : null,
+                ),
+              ),
+              SizedBox(
+                height: DynamicSize.getDynamicSmallerSizeWithMultiplier(
+                    screenSize, 0.025),
+              ),
+              TextFormField(
+                controller: photoUrlController,
+                textAlign: TextAlign.center,
+                validator: (input) => Validators.validatePhotoUrl(input),
+                readOnly: !isCurrentUser,
+                decoration: InputDecoration(
+                  label: const Text('Photo URL'),
+                  prefixIcon: const Icon(Icons.photo),
+                  suffixIcon: widget.user?.uid == authUser?.uid
+                      ? TextButton(
+                          onPressed: isPhotoUrlLoading
+                              ? null
+                              : () =>
+                                  updatePhotoUrl(authService, userDataProvider),
+                          child: isPhotoUrlLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2.5))
+                              : const Icon(Icons.done),
+                        )
+                      : null,
                 ),
               ),
               SizedBox(
@@ -119,7 +173,8 @@ class _UserInfoDisplayState extends State<UserInfoDisplay> {
                   label: const Text('Contact code'),
                   prefixIcon: const Icon(Icons.code),
                   suffixIcon: TextButton(
-                    onPressed: () => copyToClipboard(user?.contactCode ?? ""),
+                    onPressed: () =>
+                        copyToClipboard(widget.user?.contactCode ?? ""),
                     child: Icon(copyIcon),
                   ),
                 ),

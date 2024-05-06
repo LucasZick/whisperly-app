@@ -21,14 +21,14 @@ class ChatsProvider extends ChangeNotifier {
   final StreamController<ChatModel?> _currentChatController =
       StreamController<ChatModel?>.broadcast();
   Stream<ChatModel?> get currentChatStream => _currentChatController.stream;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _chatsSubscription;
+
+  bool isChatLoading = false;
 
   ChatsProvider() {
     _firebaseAuth.authStateChanges().listen(
       (user) async {
         if (user != null) {
-          await updateChats();
-          notifyListeners();
-
           _firebaseDatabase
               .collection('users')
               .doc(user.uid)
@@ -41,6 +41,14 @@ class ChatsProvider extends ChangeNotifier {
               }
             },
           );
+          _chatsSubscription = _firebaseDatabase
+              .collection('chats')
+              .where('members', arrayContains: user.uid)
+              .snapshots()
+              .listen((snapshot) async {
+            await updateChats();
+            notifyListeners();
+          });
         } else {
           _chats = null;
           notifyListeners();
@@ -50,6 +58,12 @@ class ChatsProvider extends ChangeNotifier {
   }
 
   setCurrentChat(String newChatId) async {
+    if (newChatId == currentChatId) {
+      return;
+    }
+    isChatLoading = true;
+    notifyListeners();
+
     _currentChatId = newChatId;
     _currentChatSubscription?.cancel();
     if (_currentChatId != null) {
@@ -64,9 +78,11 @@ class ChatsProvider extends ChangeNotifier {
         } else {
           _currentChatController.add(null);
         }
+        isChatLoading = false;
       });
     } else {
       _currentChatController.add(null);
+      isChatLoading = false;
     }
     notifyListeners();
   }
@@ -76,20 +92,21 @@ class ChatsProvider extends ChangeNotifier {
     List<UserModel> members =
         await getUsersFromIds(chatSnapshot.get("members") ?? []);
     List<dynamic> messagesData = chatSnapshot.get("messages") ?? [];
-
-    // Converter os dados das mensagens em objetos MessageModel
-    List<MessageModel> messages =
-        messagesData.reversed.map<MessageModel>((messageData) {
-      return MessageModel(
-        messageId: messageData['messageId'],
-        senderId: messageData['senderId'],
-        messageText: messageData['messageText'],
-        timestamp: messageData['timestamp'].toDate(),
-        messageType: MessageType.values.firstWhere(
-            (type) => type.toString() == messageData['messageType']),
-        chatId: chatSnapshot.id,
-      );
-    }).toList();
+    List<MessageModel> messages = await Future.wait(
+      messagesData.reversed.map<Future<MessageModel>>((messageData) async {
+        UserModel sender = await getUserFromId(messageData['senderId']);
+        return MessageModel(
+          messageId: messageData['messageId'],
+          chatId: chatSnapshot.id,
+          senderId: messageData['senderId'],
+          sender: sender,
+          messageText: messageData['messageText'],
+          timestamp: messageData['timestamp'].toDate(),
+          messageType: MessageType.values.firstWhere(
+              (type) => type.toString() == messageData['messageType']),
+        );
+      }).toList(),
+    );
 
     List<String> membersUid = List<String>.from(
       chatSnapshot.get("members") ?? [],
@@ -103,6 +120,7 @@ class ChatsProvider extends ChangeNotifier {
 
     return ChatModel(
       chatId: chatSnapshot.id,
+      lastMessageTimestamp: chatSnapshot.get("lastMessageTimestamp").toDate(),
       membersUid: membersUid,
       members: members,
       messages: messages,
@@ -120,31 +138,43 @@ class ChatsProvider extends ChangeNotifier {
               .get();
 
       List<ChatModel> chats = [];
-      List<dynamic> chatIds = userFromDatabase.get("chats") ?? [];
+      List chatIds = userFromDatabase.get("chats") ?? [];
       for (String chatId in chatIds) {
         DocumentSnapshot<Map<String, dynamic>> chatSnapshot =
             await _firebaseDatabase.collection("chats").doc(chatId).get();
+
         List<UserModel> members =
             await getUsersFromIds(chatSnapshot.get("members") ?? []);
-        List<dynamic> messagesData = chatSnapshot.get("messages") ?? [];
 
-        // Converter os dados das mensagens em objetos MessageModel
-        List<MessageModel> messages =
-            messagesData.reversed.map<MessageModel>((messageData) {
-          return MessageModel(
-            messageId: messageData['messageId'],
-            senderId: messageData['senderId'],
-            messageText: messageData['messageText'],
-            timestamp: messageData['timestamp'].toDate(),
-            messageType: MessageType.values.firstWhere(
-                (type) => type.toString() == messageData['messageType']),
-            chatId: chatId,
-          );
-        }).toList();
+        Map<String, UserModel> membersMap = {};
 
-        List<String> membersUid = List<String>.from(
-          chatSnapshot.get("members") ?? [],
-        );
+        for (int i = 0; i < members.length; i++) {
+          String? key = members[i].uid;
+          membersMap[key!] = members[i];
+        }
+
+        List messagesData = chatSnapshot.get("messages") ?? [];
+
+        DateTime? lastMessageTimestamp =
+            chatSnapshot.get("lastMessageTimestamp")?.toDate();
+
+        List<MessageModel> messages = messagesData.map<MessageModel>(
+          (messageData) {
+            UserModel? sender = membersMap[messageData['senderId']];
+            return MessageModel(
+              messageId: messageData['messageId'],
+              chatId: chatSnapshot.id,
+              senderId: messageData['senderId'],
+              sender: sender,
+              messageText: messageData['messageText'],
+              timestamp: messageData['timestamp']?.toDate(),
+              messageType: MessageType.values.firstWhere(
+                  (type) => type.toString() == messageData['messageType']),
+            );
+          },
+        ).toList();
+
+        List<String> membersUid = membersMap.keys.toList();
         UserModel contactUser = UserModel();
         for (UserModel user in members) {
           if (user.uid != _firebaseAuth.currentUser?.uid) {
@@ -159,10 +189,23 @@ class ChatsProvider extends ChangeNotifier {
             members: members,
             messages: messages,
             contactUser: contactUser,
+            lastMessageTimestamp: lastMessageTimestamp,
           ),
         );
       }
 
+      // Ordena a lista de chats com base no timestamp da última mensagem
+      chats.sort((a, b) {
+        if (a.lastMessageTimestamp == null && b.lastMessageTimestamp == null) {
+          return 0; // Ambos são nulos, consideramos iguais
+        } else if (a.lastMessageTimestamp == null) {
+          return 1; // 'a' é nulo, 'b' é não-nulo, 'b' vem primeiro
+        } else if (b.lastMessageTimestamp == null) {
+          return -1; // 'b' é nulo, 'a' é não-nulo, 'a' vem primeiro
+        } else {
+          return b.lastMessageTimestamp!.compareTo(a.lastMessageTimestamp!);
+        }
+      });
       _chats = chats;
     } else {
       _chats = null;
@@ -171,7 +214,6 @@ class ChatsProvider extends ChangeNotifier {
 
   Future<void> sendMessage(String messageText, String chatId) async {
     try {
-      // Crie uma nova mensagem
       MessageModel newMessage = MessageModel(
         messageId: UniqueKey().toString(),
         senderId: _firebaseAuth.currentUser!.uid,
@@ -186,7 +228,6 @@ class ChatsProvider extends ChangeNotifier {
           .messages
           .add(newMessage);
 
-      // Adicione a mensagem ao Firestore
       await _firebaseDatabase.collection('chats').doc(chatId).update({
         'messages': FieldValue.arrayUnion([
           {
@@ -195,8 +236,9 @@ class ChatsProvider extends ChangeNotifier {
             'messageText': newMessage.messageText,
             'timestamp': newMessage.timestamp,
             'messageType': newMessage.messageType.toString(),
-          }
-        ])
+          },
+        ]),
+        'lastMessageTimestamp': newMessage.timestamp,
       });
     } catch (error) {
       print('Erro ao enviar mensagem: $error');

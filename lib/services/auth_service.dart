@@ -65,6 +65,7 @@ class AuthService {
           UniqueCodeGenerator.generate(credential.user?.uid ?? "", username),
       "contacts": [],
       "chats": [],
+      "readMessages": {},
     };
     var collection = _firebaseDatabase.collection('users');
     var uid = credential.user?.uid;

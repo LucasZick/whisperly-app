@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:whisperly/providers/user_data_provider.dart';
 import 'package:whisperly/widgets/field_header.dart';
 import 'package:whisperly/widgets/user_info_display.dart';
 import 'package:whisperly/widgets/user_photo_display.dart';
@@ -9,22 +11,25 @@ class ProfileField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    UserDataProvider userDataProvider = Provider.of<UserDataProvider>(context);
     return Container(
       color: Theme.of(context).colorScheme.secondaryContainer,
       child: Stack(
         children: [
-          Positioned(
-            child: FieldHeader(
-              title: "Profile",
-              onReturnPressed: onReturnPressed,
-            ),
+          FieldHeader(
+            title: "My profile",
+            onReturnPressed: onReturnPressed,
           ),
-          const Center(
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                UserPhotoDisplay(),
-                UserInfoDisplay(),
+                UserPhotoDisplay(
+                  photoUrl: userDataProvider.currentUser?.photoUrl,
+                ),
+                UserInfoDisplay(
+                  user: userDataProvider.currentUser,
+                ),
               ],
             ),
           ),
